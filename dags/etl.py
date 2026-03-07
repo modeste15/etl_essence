@@ -19,13 +19,11 @@ AIRFLOW_DB_HOST = os.getenv("AIRFLOW_DB_HOST")
 AIRFLOW_DB_NAME = os.getenv("AIRFLOW_DB_NAME")
 AIRFLOW_DB_USER = os.getenv("AIRFLOW_DB_USER")
 AIRFLOW_DB_PASSWORD = os.getenv("AIRFLOW_DB_PASSWORD")
-AIRFLOW_DB_PORT = int(os.getenv("AIRFLOW_DB_PORT", 5432))
 
 APP_DB_HOST = os.getenv("APP_DB_HOST")
 APP_DB_NAME = os.getenv("APP_DB_NAME")
 APP_DB_USER = os.getenv("APP_DB_USER")
 APP_DB_PASSWORD = os.getenv("APP_DB_PASSWORD")
-APP_DB_PORT = int(os.getenv("APP_DB_PORT", 5435))
 
 
 DATA_DIR = "/data"
@@ -41,7 +39,7 @@ def get_db_airflow_conn():
         database=AIRFLOW_DB_NAME,
         user=AIRFLOW_DB_USER,
         password=AIRFLOW_DB_PASSWORD,
-        port=AIRFLOW_DB_PORT
+        port=5432
     )
 
     try:
@@ -57,7 +55,7 @@ def get_db_app_conn():
         database=APP_DB_NAME,
         user=APP_DB_USER,
         password=APP_DB_PASSWORD,
-        port=APP_DB_PORT
+        port=5432
     )
 
     try:
