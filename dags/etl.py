@@ -15,11 +15,18 @@ from psycopg2.extras import Json
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-DB_HOST = "airflow-db"
-DB_NAME = "airflow"
-DB_USER = "airflow"
-DB_PASSWORD = "airflow"
-DB_PORT = 5432
+AIRFLOW_DB_HOST = os.getenv("AIRFLOW_DB_HOST")
+AIRFLOW_DB_NAME = os.getenv("AIRFLOW_DB_NAME")
+AIRFLOW_DB_USER = os.getenv("AIRFLOW_DB_USER")
+AIRFLOW_DB_PASSWORD = os.getenv("AIRFLOW_DB_PASSWORD")
+AIRFLOW_DB_PORT = int(os.getenv("AIRFLOW_DB_PORT", 5432))
+
+APP_DB_HOST = os.getenv("APP_DB_HOST")
+APP_DB_NAME = os.getenv("APP_DB_NAME")
+APP_DB_USER = os.getenv("APP_DB_USER")
+APP_DB_PASSWORD = os.getenv("APP_DB_PASSWORD")
+APP_DB_PORT = int(os.getenv("APP_DB_PORT", 5435))
+
 
 DATA_DIR = "/data"
 DEZIP_DIR = "/data/dezipper"
@@ -27,14 +34,30 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(DEZIP_DIR, exist_ok=True)
 
 
-def get_db_conn():
+def get_db_airflow_conn():
 
     conn = psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        port=DB_PORT
+        host=AIRFLOW_DB_HOST,
+        database=AIRFLOW_DB_NAME,
+        user=AIRFLOW_DB_USER,
+        password=AIRFLOW_DB_PASSWORD,
+        port=AIRFLOW_DB_PORT
+    )
+
+    try:
+        psycopg2.extras.register_default_jsonb(conn_or_curs=conn, loads=json.loads)
+    except Exception:
+        logger.debug("Impossible d'enregistrer le convertisseur JSONB, fallback activé.")
+    return conn
+
+def get_db_app_conn():
+
+    conn = psycopg2.connect(
+        host=APP_DB_HOST,
+        database=APP_DB_NAME,
+        user=APP_DB_USER,
+        password=APP_DB_PASSWORD,
+        port=APP_DB_PORT
     )
 
     try:
@@ -82,7 +105,7 @@ def download_data():
 def read_data():
 
     logger.info("Lecture des fichiers XML dans %s", DEZIP_DIR)
-    with get_db_conn() as conn:
+    with get_db_airflow_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS bronze_data (
@@ -157,10 +180,10 @@ def read_data():
 def bronze_to_silver():
 
     logger.info("Début transformation bronze -> silver")
-    with get_db_conn() as conn:
-        with conn.cursor() as cur:
+    with get_db_app_conn() as conn_app:
+        with conn_app.cursor() as cur_app:
             # Création des tables si nécessaire
-            cur.execute("""
+            cur_app.execute("""
             CREATE TABLE IF NOT EXISTS pdv (
                 pdv_id TEXT PRIMARY KEY,
                 latitude TEXT,
@@ -171,26 +194,26 @@ def bronze_to_silver():
                 ville TEXT
             );
             """)
-            cur.execute("""
+            cur_app.execute("""
             CREATE TABLE IF NOT EXISTS services (
                 id SERIAL PRIMARY KEY,
                 nom TEXT UNIQUE
             );
             """)
-            cur.execute("""
+            cur_app.execute("""
             CREATE TABLE IF NOT EXISTS pdv_service (
                 pdv_id TEXT REFERENCES pdv(pdv_id),
                 service_id INT REFERENCES services(id),
                 PRIMARY KEY (pdv_id, service_id)
             );
             """)
-            cur.execute("""
+            cur_app.execute("""
             CREATE TABLE IF NOT EXISTS produit (
                 id SERIAL PRIMARY KEY,
                 nom TEXT UNIQUE
             );
             """)
-            cur.execute("""
+            cur_app.execute("""
             CREATE TABLE IF NOT EXISTS prix_pdv (
                 pdv_id TEXT REFERENCES pdv(pdv_id),
                 produit_id INT REFERENCES produit(id),
@@ -199,8 +222,10 @@ def bronze_to_silver():
                 PRIMARY KEY (pdv_id, produit_id, maj)
             );
             """)
-            conn.commit()
+            conn_app.commit()
 
+        with get_db_airflow_conn() as conn:
+            cur = conn.cursor()
             cur.execute("SELECT pdv_id, latitude, longitude, cp, pop, adresse, ville, services, prix FROM bronze_data")
             rows = cur.fetchall()
             logger.info("Nombre d'enregistrements bronze à traiter: %d", len(rows))
@@ -210,7 +235,7 @@ def bronze_to_silver():
 
                 # Insert PDV si le pdv_id n'existe pas déjà
                 try:
-                    cur.execute("""
+                    cur_app.execute("""
                         INSERT INTO pdv(pdv_id, latitude, longitude, cp, pop, adresse, ville)
                         VALUES (%s,%s,%s,%s,%s,%s,%s)
                         ON CONFLICT (pdv_id) DO NOTHING
@@ -225,12 +250,12 @@ def bronze_to_silver():
                     if not service:
                         continue
                     try:
-                        cur.execute("INSERT INTO services(nom) VALUES (%s) ON CONFLICT (nom) DO NOTHING", (service,))
-                        cur.execute("SELECT id FROM services WHERE nom=%s", (service,))
-                        res = cur.fetchone()
+                        cur_app.execute("INSERT INTO services(nom) VALUES (%s) ON CONFLICT (nom) DO NOTHING", (service,))
+                        cur_app.execute("SELECT id FROM services WHERE nom=%s", (service,))
+                        res = cur_app.fetchone()
                         if res:
                             service_id = res[0]
-                            cur.execute("INSERT INTO pdv_service(pdv_id, service_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (pdv_id, service_id))
+                            cur_app.execute("INSERT INTO pdv_service(pdv_id, service_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (pdv_id, service_id))
                     except Exception as e:
                         logger.warning("Erreur traitement service '%s' pour pdv %s: %s", service, pdv_id, e)
 
@@ -255,15 +280,15 @@ def bronze_to_silver():
                         valeur = None
 
                     try:
-                        cur.execute("INSERT INTO produit(nom) VALUES (%s) ON CONFLICT (nom) DO NOTHING", (nom,))
-                        cur.execute("SELECT id FROM produit WHERE nom=%s", (nom,))
-                        res = cur.fetchone()
+                        cur_app.execute("INSERT INTO produit(nom) VALUES (%s) ON CONFLICT (nom) DO NOTHING", (nom,))
+                        cur_app.execute("SELECT id FROM produit WHERE nom=%s", (nom,))
+                        res = cur_app.fetchone()
                         if not res:
                             logger.warning("Impossible de récupérer id produit pour %s", nom)
                             continue
                         produit_id = res[0]
 
-                        cur.execute("""
+                        cur_app.execute("""
                             INSERT INTO prix_pdv(pdv_id, produit_id, valeur, maj)
                             VALUES (%s,%s,%s,%s)
                             ON CONFLICT (pdv_id, produit_id, maj) DO NOTHING
@@ -271,7 +296,7 @@ def bronze_to_silver():
                     except Exception as e:
                         logger.warning("Erreur insertion prix pour pdv %s produit %s: %s", pdv_id, nom, e)
 
-            conn.commit()
+            conn_app.commit()
     logger.info("Transformation bronze -> silver terminée.")
 
 
@@ -280,7 +305,7 @@ def clean_bronze():
     Vide la table bronze_data après transformation.
     """
     logger.info("Nettoyage de bronze_data")
-    with get_db_conn() as conn:
+    with get_db_airflow_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM bronze_data")
         conn.commit()
