@@ -11,15 +11,25 @@ import xml.etree.ElementTree as ET
 import json
 import logging
 from psycopg2.extras import Json
+from dotenv import load_dotenv
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-DB_HOST = "airflow-db"
-DB_NAME = "airflow"
-DB_USER = "airflow"
-DB_PASSWORD = "airflow"
-DB_PORT = 5432
+
+load_dotenv()
+
+
+
+DB_HOST = os.getenv("AIRFLOW_DB_HOST")  
+DB_NAME = os.getenv("AIRFLOW_DB_NAME")
+DB_USER = os.getenv("AIRFLOW_DB_USER")
+DB_PASSWORD = os.getenv("AIRFLOW_DB_PASSWORD")
+DB_PORT = int(os.getenv("AIRFLOW_DB_PORT"))
+
+
+
 
 DATA_DIR = "/data"
 DEZIP_DIR = "/data/dezipper"
@@ -28,6 +38,8 @@ os.makedirs(DEZIP_DIR, exist_ok=True)
 
 
 def get_db_conn():
+
+    
 
     conn = psycopg2.connect(
         host=DB_HOST,
