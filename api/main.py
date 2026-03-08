@@ -1,7 +1,263 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+from typing import List, Optional
+import psycopg2
+import psycopg2.extras
+import os
+from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
-app = FastAPI()
+
+
+app = FastAPI(
+    title="API Stations Carburant",
+    description="API pour exploiter les données du pipeline ETL carburant",
+    version="1.0"
+)
+
+DB_HOST = "airflow-db"
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_PORT = int(os.getenv("DB_PORT", 5432))
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+Instrumentator().instrument(app).expose(app)
+
+def get_db_conn():
+    return psycopg2.connect(
+        host=DB_HOST,
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        port=DB_PORT
+    )
+
+class PDV(BaseModel):
+    pdv_id: str
+    latitude: str
+    longitude: str
+    cp: str
+    pop: Optional[str]
+    adresse: Optional[str]
+    ville: Optional[str]
+
+
+class Service(BaseModel):
+    id: int
+    nom: str
+
+
+class Produit(BaseModel):
+    id: int
+    nom: str
+
+
+class Prix(BaseModel):
+    pdv_id: str
+    produit: str
+    valeur: float
+    maj: datetime
+
+
+class StationDetail(BaseModel):
+    pdv_id: str
+    adresse: Optional[str]
+    ville: Optional[str]
+    cp: str
+    services: List[str]
+    carburants: List[Prix]
+
+
+
 
 @app.get("/")
-def read_root():
-    return {"message": "Hello from Essence API"}
+def root():
+    return {"message": "API Carburant active"}
+
+
+# ==========================
+# STATIONS
+# ==========================
+
+@app.get("/stations", response_model=List[PDV])
+def get_stations(
+        ville: Optional[str] = None,
+        cp: Optional[str] = None,
+        limit: int = Query(50, le=200)
+):
+
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    query = "SELECT * FROM pdv WHERE 1=1"
+    params = []
+
+    if ville:
+        query += " AND LOWER(ville) LIKE LOWER(%s)"
+        params.append(f"%{ville}%")
+
+    if cp:
+        query += " AND cp = %s"
+        params.append(cp)
+
+    query += " LIMIT %s"
+    params.append(limit)
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows
+
+
+@app.get("/stations/{pdv_id}", response_model=StationDetail)
+def get_station(pdv_id: str):
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("SELECT * FROM pdv WHERE pdv_id=%s", (pdv_id,))
+    station = cur.fetchone()
+    if not station:
+        cur.close()
+        conn.close()
+        raise HTTPException(status_code=404, detail="Station non trouvée")
+
+    # Récupération des services
+    cur.execute("""
+        SELECT s.nom
+        FROM services s
+        JOIN pdv_service ps ON ps.service_id = s.id
+        WHERE ps.pdv_id=%s
+    """, (pdv_id,))
+    services = [s["nom"] for s in cur.fetchall()]
+
+    # Récupération des prix
+    cur.execute("""
+        SELECT pr.nom as produit, p.valeur, p.maj, p.pdv_id
+        FROM prix_pdv p
+        JOIN produit pr ON pr.id = p.produit_id
+        WHERE p.pdv_id=%s
+        ORDER BY p.maj DESC
+    """, (pdv_id,))
+    
+    prix_raw = cur.fetchall()
+    # Transformation pour correspondre au modèle Pydantic
+    prix = [
+        {
+            "produit": p["produit"],
+            "valeur": float(p["valeur"]),  
+            "maj": p["maj"].isoformat(),   
+            "pdv_id": p["pdv_id"]          
+        }
+        for p in prix_raw
+    ]
+
+    cur.close()
+    conn.close()
+
+    return {
+        "pdv_id": station["pdv_id"],
+        "adresse": station["adresse"],
+        "ville": station["ville"],
+        "cp": station["cp"],
+        "services": services,
+        "carburants": prix
+    }
+
+
+
+
+@app.get("/services", response_model=List[Service])
+def get_services():
+
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("SELECT * FROM services ORDER BY nom")
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows
+
+
+
+@app.get("/produits", response_model=List[Produit])
+def get_produits():
+
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("SELECT * FROM produit ORDER BY nom")
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows
+
+
+
+
+@app.get("/prix/{carburant}")
+def get_prix_carburant(carburant: str, limit: int = 50):
+
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT p.pdv_id, pr.nom as produit, p.valeur, p.maj
+        FROM prix_pdv p
+        JOIN produit pr ON pr.id = p.produit_id
+        WHERE LOWER(pr.nom) = LOWER(%s)
+        ORDER BY p.valeur ASC
+        LIMIT %s
+    """, (carburant, limit))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows
+
+
+
+
+@app.get("/stations-moins-cheres/{carburant}")
+def stations_moins_cheres(carburant: str, limit: int = 10):
+
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT pdv.ville, pdv.adresse, p.valeur, p.maj
+        FROM prix_pdv p
+        JOIN produit pr ON pr.id = p.produit_id
+        JOIN pdv ON pdv.pdv_id = p.pdv_id
+        WHERE LOWER(pr.nom) = LOWER(%s)
+        ORDER BY p.valeur ASC
+        LIMIT %s
+    """, (carburant, limit))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows

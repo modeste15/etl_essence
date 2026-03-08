@@ -7,8 +7,7 @@ services:
       POSTGRES_USER: ${AIRFLOW_DB_USER}
       POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD}
       POSTGRES_DB: ${AIRFLOW_DB_NAME}
-    ports:
-      - "5434:5432"
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${AIRFLOW_DB_USER} -d ${AIRFLOW_DB_NAME}"]
 
@@ -79,6 +78,33 @@ services:
       done;
       airflow scheduler
       "
+  api:
+    build: ./api
+    container_name: carburant_api
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: airflow-db
+      DB_NAME: airflow
+      DB_USER: airflow
+      DB_PASSWORD: airflow
+      DB_PORT: 5432
+    depends_on:
+      - airflow-db
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3030:3030"
+    depends_on:
+      - prometheus
 
 volumes:
   airflow_pgdata:
