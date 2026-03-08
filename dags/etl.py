@@ -11,6 +11,8 @@ import xml.etree.ElementTree as ET
 import json
 import logging
 from psycopg2.extras import Json
+from dotenv import load_dotenv
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

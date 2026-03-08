@@ -4,6 +4,8 @@ from typing import List, Optional
 import psycopg2
 import psycopg2.extras
 import os
+from dotenv import load_dotenv
+
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
