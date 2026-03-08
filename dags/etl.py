@@ -26,7 +26,7 @@ DB_HOST = os.getenv("AIRFLOW_DB_HOST")
 DB_NAME = os.getenv("AIRFLOW_DB_NAME")
 DB_USER = os.getenv("AIRFLOW_DB_USER")
 DB_PASSWORD = os.getenv("AIRFLOW_DB_PASSWORD")
-DB_PORT = int(os.getenv("AIRFLOW_DB_PORT"))
+DB_PORT = 5432
 
 
 
