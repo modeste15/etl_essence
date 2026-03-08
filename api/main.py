@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 
+load_dotenv()
+
 
 app = FastAPI(
     title="API Stations Carburant",
@@ -16,7 +18,7 @@ app = FastAPI(
     version="1.0"
 )
 
-DB_HOST = "airflow-db"
+DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -261,3 +263,5 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
     conn.close()
 
     return rows
+
+

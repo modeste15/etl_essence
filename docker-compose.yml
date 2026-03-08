@@ -84,11 +84,11 @@ services:
     ports:
       - "5000:5000"
     environment:
-      DB_HOST: airflow-db
-      DB_NAME: airflow
-      DB_USER: airflow
-      DB_PASSWORD: airflow
-      DB_PORT: 5432
+      DB_HOST: ${AIRFLOW_DB_HOST}
+      DB_NAME: ${AIRFLOW_DB_NAME}
+      DB_USER: ${AIRFLOW_DB_USER}
+      DB_PASSWORD: ${AIRFLOW_DB_PASSWORD}
+      DB_PORT: ${AIRFLOW_DB_PORT}
     depends_on:
       - airflow-db
 
