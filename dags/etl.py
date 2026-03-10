@@ -310,7 +310,7 @@ default_args = {
 with DAG(
     'bronze_silver_etl',
     default_args=default_args,
-    schedule_interval='@hourly',
+    schedule_interval='0 */6 * * *',
     catchup=False,
     max_active_runs=1,
     tags=['bronze', 'silver', 'etl']
