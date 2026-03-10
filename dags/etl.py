@@ -31,8 +31,8 @@ DB_PORT = 5432
 
 
 
-DATA_DIR = "/data"
-DEZIP_DIR = "/data/dezipper"
+DATA_DIR = "/opt/airflow/data"
+DEZIP_DIR = "/opt/airflow/data/dezipper"
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(DEZIP_DIR, exist_ok=True)
 
