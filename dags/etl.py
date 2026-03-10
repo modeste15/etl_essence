@@ -31,16 +31,15 @@ DB_PORT = 5432
 
 
 
-DATA_DIR = "/opt/airflow/data"
-DEZIP_DIR = "/opt/airflow/data/dezipper"
-
+DATA_DIR = "/data"
+DEZIP_DIR = "/data/dezipper"
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(DEZIP_DIR, exist_ok=True)
 
+
 def get_db_conn():
 
-    
-
+    print (f"----------------------------------------------Connecting to DB at {DB_HOST}:{DB_PORT} with user {DB_USER } and db {DB_NAME}")
     conn = psycopg2.connect(
         host=DB_HOST,
         database=DB_NAME,
@@ -310,7 +309,7 @@ default_args = {
 with DAG(
     'bronze_silver_etl',
     default_args=default_args,
-    schedule_interval='0 */6 * * *',
+    schedule_interval='@hourly',
     catchup=False,
     max_active_runs=1,
     tags=['bronze', 'silver', 'etl']
