@@ -216,6 +216,28 @@ def get_produits():
     return rows
 
 
+@app.get("/villes")
+def get_villes():
+
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT DISTINCT
+            cp,
+            ville || ' (' || cp || ')' AS ville_cp
+        FROM pdv
+        ORDER BY ville
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows
+
+
 
 
 @app.get("/prix/{carburant}")
