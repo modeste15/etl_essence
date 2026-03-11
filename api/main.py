@@ -227,7 +227,7 @@ def get_villes():
             cp,
             ville || ' (' || cp || ')' AS ville_cp
         FROM pdv
-        ORDER BY ville
+        ORDER BY cp
     """)
 
     rows = cur.fetchall()
