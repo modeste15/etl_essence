@@ -216,8 +216,8 @@ def get_produits():
     return rows
 
 
-@app.get("/villes")
-def get_villes():
+@app.get("/villes/{ville_cp}")
+def get_villes(ville_cp: str):
 
     conn = get_db_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -227,8 +227,9 @@ def get_villes():
             cp,
             ville || ' (' || cp || ')' AS ville_cp
         FROM pdv
+        where LOWER(ville) LIKE LOWER(%s) OR cp = %s
         ORDER BY cp
-    """)
+    """, (f"%{ville_cp}%", ville_cp))
 
     rows = cur.fetchall()
 
