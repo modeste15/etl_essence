@@ -225,9 +225,9 @@ def get_villes(ville_cp: str):
     cur.execute("""
         SELECT DISTINCT
             cp,
-            ville || ' (' || cp || ')' AS ville_cp
+            INITCAP(LOWER(ville)) || ' (' || cp || ')' AS ville_cp
         FROM pdv
-        where LOWER(ville) LIKE LOWER(%s) OR cp = %s
+        WHERE LOWER(ville) LIKE LOWER(%s) OR cp = %s
         ORDER BY cp
     """, (f"%{ville_cp}%", ville_cp))
 
