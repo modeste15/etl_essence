@@ -429,3 +429,26 @@ def produits_pbi():
     conn.close()
 
     return rows
+
+@app.get("/pbi/villes")
+def villes_pbi():
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    query = """SELECT 
+        MIN(cp) AS cp,
+        INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
+    FROM pdv
+    WHERE LOWER(ville) LIKE LOWER(%s) OR cp = %s
+    GROUP BY LOWER(ville), MIN(cp)
+    ORDER BY ville_cp
+    """
+
+
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows
