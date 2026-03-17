@@ -220,12 +220,13 @@ def get_villes(ville_cp: str):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     cur.execute("""
-        SELECT DISTINCT
-            cp,
-            INITCAP(LOWER(ville)) || ' (' || cp || ')' AS ville_cp
-        FROM pdv
-        WHERE LOWER(ville) LIKE LOWER(%s) OR cp = %s
-        ORDER BY cp
+    SELECT 
+        MIN(cp) AS cp,
+        INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
+    FROM pdv
+    WHERE LOWER(ville) LIKE LOWER(%s) OR cp = %s
+    GROUP BY LOWER(ville)
+    ORDER BY ville
     """, (f"%{ville_cp}%", ville_cp))
 
     rows = cur.fetchall()
