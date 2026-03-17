@@ -437,7 +437,7 @@ def villes_pbi():
 
     query = """
     SELECT 
-    INITCAP(LOWER(ville)) || ' (' || cp || ')' AS ville_cp
+    INITCAP(LOWER(ville)) || ' (' || cp || ')' AS ville_cp, cp
         FROM (
             SELECT 
                 ville,
@@ -445,6 +445,7 @@ def villes_pbi():
             FROM pdv
             GROUP BY ville
         ) AS sub
+        Group BY ville_cp, cp
         ORDER BY ville_cp;
     """
 
