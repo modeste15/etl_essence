@@ -439,7 +439,6 @@ def villes_pbi():
         MIN(cp) AS cp,
         INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
     FROM pdv
-    WHERE LOWER(ville) LIKE LOWER(%s) OR cp = %s
     GROUP BY LOWER(ville), MIN(cp)
     ORDER BY ville_cp
     """
