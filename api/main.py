@@ -418,7 +418,7 @@ def produits_pbi():
 
     query = """
         SELECT *
-        FROM produits
+        FROM produit
     """
 
 
