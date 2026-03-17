@@ -97,7 +97,6 @@ def root():
 def get_stations(
         ville: Optional[str] = None,
         cp: Optional[str] = None,
-        limit: int = Query(50, le=200)
 ):
 
     conn = get_db_conn()
@@ -114,8 +113,6 @@ def get_stations(
         query += " AND cp = %s"
         params.append(cp)
 
-    query += " LIMIT %s"
-    params.append(limit)
 
     cur.execute(query, params)
     rows = cur.fetchall()
