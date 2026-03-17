@@ -224,7 +224,7 @@ def get_villes(ville_cp: str):
         MIN(cp) AS cp,
         INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
     FROM pdv
-    WHERE LOWER(ville_cp) LIKE LOWER(%s) OR cp = %s
+    WHERE LOWER(ville) LIKE LOWER(%s) OR cp = %s
     GROUP BY LOWER(ville), MIN(cp)
     ORDER BY ville_cp
 """, (f"%{ville_cp}%", ville_cp))
@@ -323,3 +323,119 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
 
         return rows
 
+
+
+"""
+
+    requete pour power bi :
+
+"""
+
+
+@app.get("/pbi/stations")
+    def stations_pbi(
+        
+    ):
+        conn = get_db_conn()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        query = """
+            SELECT *
+            FROM pdv
+        """
+
+
+        cur.execute(query)
+        rows = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return rows
+
+
+@app.get("/pbi/services")
+    def services_pbi(
+        
+    ):
+        conn = get_db_conn()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        query = """
+            SELECT *
+            FROM services
+        """
+
+
+        cur.execute(query)
+        rows = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return rows
+
+@app.get("/pbi/pdv_services")
+    def pdv_services_pbi(
+        
+    ):
+        conn = get_db_conn()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        query = """
+            SELECT *
+            FROM pdv_services
+        """
+
+
+        cur.execute(query)
+        rows = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return rows
+
+
+@app.get("/pbi/prix_pdv")
+    def prix_pdv_pbi(
+        
+    ):
+        conn = get_db_conn()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        query = """
+            SELECT *
+            FROM prix_pdv
+        """
+
+
+        cur.execute(query)
+        rows = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return rows
+
+
+@app.get("/pbi/produits")
+    def produits_pbi(
+        
+    ):
+        conn = get_db_conn()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        query = """
+            SELECT *
+            FROM produits
+        """
+
+
+        cur.execute(query)
+        rows = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return rows
