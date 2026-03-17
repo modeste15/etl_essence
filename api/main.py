@@ -435,12 +435,17 @@ def villes_pbi():
     conn = get_db_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    query = """SELECT 
-        MIN(cp) AS cp,
-        INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
-    FROM pdv
-    GROUP BY ville_cp
-    ORDER BY ville_cp
+    query = """
+    SELECT 
+    INITCAP(LOWER(ville)) || ' (' || cp || ')' AS ville_cp
+        FROM (
+            SELECT 
+                ville,
+                MIN(cp) AS cp
+            FROM pdv
+            GROUP BY ville
+        ) AS sub
+        ORDER BY ville_cp;
     """
 
 
