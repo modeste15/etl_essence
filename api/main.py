@@ -332,7 +332,7 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
 """
 
 
-@app.get("/pbi/stations")
+    @app.get("/pbi/stations")
     def stations_pbi():
         conn = get_db_conn()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -352,7 +352,7 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
         return rows
 
 
-@app.get("/pbi/services")
+    @app.get("/pbi/services")
     def services_pbi():
         conn = get_db_conn()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -371,7 +371,7 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
 
         return rows
 
-@app.get("/pbi/pdv_services")
+    @app.get("/pbi/pdv_services")
     def pdv_services_pbi():
         conn = get_db_conn()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -391,7 +391,7 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
         return rows
 
 
-@app.get("/pbi/prix_pdv")
+    @app.get("/pbi/prix_pdv")
     def prix_pdv_pbi():
         conn = get_db_conn()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -411,7 +411,7 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
         return rows
 
 
-@app.get("/pbi/produits")
+    @app.get("/pbi/produits")
     def produits_pbi():
         conn = get_db_conn()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
