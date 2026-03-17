@@ -224,10 +224,10 @@ def get_villes(ville_cp: str):
         MIN(cp) AS cp,
         INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
     FROM pdv
-    WHERE LOWER(ville) LIKE LOWER(%s) OR cp = %s
-    GROUP BY LOWER(ville)
-    ORDER BY ville
-    """, (f"%{ville_cp}%", ville_cp))
+    WHERE LOWER(ville_cp) LIKE LOWER(%s) OR cp = %s
+    GROUP BY LOWER(ville_cp)
+    ORDER BY ville_cp
+""", (f"%{ville_cp}%", ville_cp))
 
     rows = cur.fetchall()
 
