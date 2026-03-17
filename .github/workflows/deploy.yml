@@ -11,7 +11,7 @@ jobs:
     environment: SSH
 
     steps:
-      - name: Deploy via SSH
+      - name: Deploy on the vps server
         uses: appleboy/ssh-action@v1.0.0
 
         with:
