@@ -439,7 +439,7 @@ def villes_pbi():
         MIN(cp) AS cp,
         INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
     FROM pdv
-    GROUP BY ville, cp
+    GROUP BY ville_cp
     ORDER BY ville_cp
     """
 
