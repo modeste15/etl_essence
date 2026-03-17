@@ -225,7 +225,7 @@ def get_villes(ville_cp: str):
         INITCAP(LOWER(ville)) || ' (' || MIN(cp) || ')' AS ville_cp
     FROM pdv
     WHERE LOWER(ville_cp) LIKE LOWER(%s) OR cp = %s
-    GROUP BY LOWER(ville_cp)
+    GROUP BY LOWER(ville), MIN(cp)
     ORDER BY ville_cp
 """, (f"%{ville_cp}%", ville_cp))
 
