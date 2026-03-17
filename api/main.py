@@ -289,39 +289,39 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
 
 
 @app.get("/stations-prix-range")
-    def stations_prix_range(
-        prix_min: float = Query(0),
-        prix_max: float = Query(2.0),
-        carburant: Optional[str] = None,
-        limit: int = Query(50, le=200)
-    ):
-        conn = get_db_conn()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+def stations_prix_range(
+    prix_min: float = Query(0),
+    prix_max: float = Query(2.0),
+    carburant: Optional[str] = None,
+    limit: int = Query(50, le=200)
+):
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = """
-            SELECT DISTINCT pdv.pdv_id, pdv.adresse, pdv.ville, pdv.cp, 
-                            pr.nom as carburant, p.valeur, p.maj
-            FROM prix_pdv p
-            JOIN produit pr ON pr.id = p.produit_id
-            JOIN pdv ON pdv.pdv_id = p.pdv_id
-            WHERE p.valeur BETWEEN %s AND %s
-        """
-        params = [prix_min, prix_max]
+    query = """
+        SELECT DISTINCT pdv.pdv_id, pdv.adresse, pdv.ville, pdv.cp, 
+                        pr.nom as carburant, p.valeur, p.maj
+        FROM prix_pdv p
+        JOIN produit pr ON pr.id = p.produit_id
+        JOIN pdv ON pdv.pdv_id = p.pdv_id
+        WHERE p.valeur BETWEEN %s AND %s
+    """
+    params = [prix_min, prix_max]
 
-        if carburant:
-            query += " AND LOWER(pr.nom) = LOWER(%s)"
-            params.append(carburant)
+    if carburant:
+        query += " AND LOWER(pr.nom) = LOWER(%s)"
+        params.append(carburant)
 
-        query += " ORDER BY p.valeur ASC LIMIT %s"
-        params.append(limit)
+    query += " ORDER BY p.valeur ASC LIMIT %s"
+    params.append(limit)
 
-        cur.execute(query, params)
-        rows = cur.fetchall()
+    cur.execute(query, params)
+    rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
+    cur.close()
+    conn.close()
 
-        return rows
+    return rows
 
 
 
@@ -333,99 +333,99 @@ def stations_moins_cheres(carburant: str, limit: int = 10):
 
 
 @app.get("/pbi/stations")
-    def stations_pbi():
-        conn = get_db_conn()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+def stations_pbi():
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = """
-            SELECT *
-            FROM pdv
-        """
+    query = """
+        SELECT *
+        FROM pdv
+    """
 
 
-        cur.execute(query)
-        rows = cur.fetchall()
+    cur.execute(query)
+    rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
+    cur.close()
+    conn.close()
 
-        return rows
+    return rows
 
 
 @app.get("/pbi/services")
-    def services_pbi():
-        conn = get_db_conn()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+def services_pbi():
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = """
-            SELECT *
-            FROM services
-        """
+    query = """
+        SELECT *
+        FROM services
+    """
 
 
-        cur.execute(query)
-        rows = cur.fetchall()
+    cur.execute(query)
+    rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
+    cur.close()
+    conn.close()
 
-        return rows
+    return rows
 
 @app.get("/pbi/pdv_services")
-    def pdv_services_pbi():
-        conn = get_db_conn()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+def pdv_services_pbi():
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = """
-            SELECT *
-            FROM pdv_services
-        """
+    query = """
+        SELECT *
+        FROM pdv_services
+    """
 
 
-        cur.execute(query)
-        rows = cur.fetchall()
+    cur.execute(query)
+    rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
+    cur.close()
+    conn.close()
 
-        return rows
+    return rows
 
 
 @app.get("/pbi/prix_pdv")
-    def prix_pdv_pbi():
-        conn = get_db_conn()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+def prix_pdv_pbi():
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = """
-            SELECT *
-            FROM prix_pdv
-        """
+    query = """
+        SELECT *
+        FROM prix_pdv
+    """
 
 
-        cur.execute(query)
-        rows = cur.fetchall()
+    cur.execute(query)
+    rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
+    cur.close()
+    conn.close()
 
-        return rows
+    return rows
 
 
 @app.get("/pbi/produits")
-    def produits_pbi():
-        conn = get_db_conn()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+def produits_pbi():
+    conn = get_db_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = """
-            SELECT *
-            FROM produits
-        """
+    query = """
+        SELECT *
+        FROM produits
+    """
 
 
-        cur.execute(query)
-        rows = cur.fetchall()
+    cur.execute(query)
+    rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
+    cur.close()
+    conn.close()
 
-        return rows
+    return rows
